@@ -173,13 +173,13 @@ describe('Application', function () {
 
         it('should error if the queue with queueName does not exist in schema', function (done) {
           expect(function () {
-            ctx.app.queue('queue-foo', {}, function * () {})
+            ctx.app.queue('queue-foo', {}, {}, function * () {})
           }).to.throw(/queue-foo.*exist/)
           done()
         })
         it('should error if the passed queueOpts', function (done) {
           expect(function () {
-            ctx.app.queue('queue-name', {}, {}, function * () {})
+            ctx.app.queue('queue-name', {}, {}, {}, function * () {})
           }).to.throw(/queueOpts.*schema/)
           done()
         })
@@ -187,6 +187,16 @@ describe('Application', function () {
           ctx.app.queue('queue-name', {}, function * () {})
           // test queueNames for coverage
           expect(ctx.app.queueNames).equal(['queue-name'])
+          done()
+        })
+        it('should return correct jobOpts', function (done) {
+          ctx.app.queue('queue-name', {}, {test: 'test'}, function * () {})
+          // test queueNames for coverage
+          expect(ctx.app.queueOptions).equal({
+            'queue-name': {
+              test: 'test'
+            }
+          })
           done()
         })
       })
