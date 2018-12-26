@@ -480,6 +480,112 @@ describe('ClusterManager', function () {
       })
 
       describe('stopped', function () {
+        describe('app.queueOptions exist', function () {
+          beforeEach(function (done) {
+            ctx.os.cpus.returns([{ /* cpu1 */}, { /* cpu2 */}, { /* cpu3 */}, { /* cpu4 */}])
+            ctx.app.queueOptions = []
+            ctx.app.queueOptions[ctx.queueName] = {
+              numberInstances: 2
+            }
+            sinon.stub(ctx.ClusterManager, 'fork').resolves()
+            done()
+          })
+
+          afterEach(function (done) {
+            delete ctx.app.queueOptions
+            done()
+          })
+
+          it('should fork 2 consumer for "queue-name"', function (done) {
+            ctx.clusterManager.start().then(function() {
+              sinon.assert.calledTwice(ctx.ClusterManager.fork)
+              sinon.assert.calledWith(ctx.ClusterManager.fork, ctx.queueName)
+              done()
+            })
+          })
+
+          describe('There are two other queue', function () {
+            beforeEach(function (done) {
+              ctx.app.queueNames.push('queue-name2')
+              ctx.app.queueNames.push('queue-name3')
+              ctx.app.queueOptions['queue-name2'] = {}
+              ctx.app.queueOptions['queue-name3'] = {}
+              done()
+            })
+            afterEach(function (done) {
+              ctx.app.queueNames = [ctx.queueName]
+              done()
+            })
+
+            describe('COWORKERS_WORKERS_PER_QUEUE exist', function () {
+              beforeEach(function(done) {
+                process.env.COWORKERS_WORKERS_PER_QUEUE = 3
+                done()
+              })
+              afterEach(function (done) {
+                delete process.env.COWORKERS_WORKERS_PER_QUEUE
+                done()
+              })
+
+              it('should fork 3 consumers for each other queues', function (done) {
+                ctx.clusterManager.start().then(function() {
+                  sinon.assert.callCount(ctx.ClusterManager.fork, 8)
+                  sinon.assert.calledWith(ctx.ClusterManager.fork, ctx.queueName)
+                  sinon.assert.calledWith(ctx.ClusterManager.fork, 'queue-name2')
+                  sinon.assert.calledWith(ctx.ClusterManager.fork, 'queue-name3')
+                  done()
+                })
+              })
+            })
+
+            describe('COWORKERS_WORKERS_PER_QUEUE not exist', function () {
+              describe('numCPUs > number queue + number instance', function() {
+                beforeEach(function (done) {
+                  ctx.os.cpus.returns([{ /* cpu1 */}, { /* cpu2 */}, { /* cpu3 */}, { /* cpu4 */}, { /* cpu5 */}, { /* cpu6 */}])
+                  done()
+                })
+
+                afterEach(function (done) {
+                  ctx.os.cpus.returns([{ /* cpu1 */}, { /* cpu2 */}, { /* cpu3 */}, { /* cpu4 */}])
+                  done()
+                })
+
+                it('should fork 2 consumers for each other queues', function (done) {
+                  ctx.clusterManager.start().then(function() {
+                    sinon.assert.callCount(ctx.ClusterManager.fork, 6)
+                    sinon.assert.calledWith(ctx.ClusterManager.fork, ctx.queueName)
+                    sinon.assert.calledWith(ctx.ClusterManager.fork, 'queue-name2')
+                    sinon.assert.calledWith(ctx.ClusterManager.fork, 'queue-name3')
+                    done()
+                  })
+                })
+              })
+
+              describe('numCPUs < number queue + number instance', function () {
+                beforeEach(function (done) {
+                  ctx.os.cpus.returns([{ /* cpu1 */}, { /* cpu2 */}])
+                  done()
+                })
+
+                afterEach(function (done) {
+                  ctx.os.cpus.returns([{ /* cpu1 */}, { /* cpu2 */}, { /* cpu3 */}, { /* cpu4 */}])
+                  done()
+                })
+
+                it('should fork 4 consumers for each other queues', function (done) {
+                  ctx.clusterManager.start().then(function() {
+                    sinon.assert.callCount(ctx.ClusterManager.fork, 4)
+                    sinon.assert.calledWith(ctx.ClusterManager.fork, ctx.queueName)
+                    sinon.assert.calledWith(ctx.ClusterManager.fork, 'queue-name2')
+                    sinon.assert.calledWith(ctx.ClusterManager.fork, 'queue-name3')
+                    done()
+                  })
+                })
+              })
+            })
+          })
+        })
+
         describe('COWORKERS_WORKERS_PER_QUEUE exists', function () {
           beforeEach(function (done) {
             ctx.os.cpus.returns([{ /* cpu1 */}, { /* cpu2 */}])
