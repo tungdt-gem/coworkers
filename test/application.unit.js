@@ -184,7 +184,7 @@ describe('Application', function () {
           done()
         })
         it('should not error if the queue with queueName exists in schema', function (done) {
-          ctx.app.queue('queue-name', {}, function * () {})
+          ctx.app.queue('queue-name', function * () {})
           // test queueNames for coverage
           expect(ctx.app.queueNames).equal(['queue-name'])
           done()
@@ -196,6 +196,26 @@ describe('Application', function () {
             'queue-name': {
               test: 'test'
             }
+          })
+          done()
+        })
+
+        it('should if pass only 1 object, will be consumeOpts', function(done) {
+          ctx.app.queue('queue-name', {test: 'test'}, function * () {})
+          expect(ctx.app.queueMiddlewares['queue-name'].consumeOpts).equal({
+            test: 'test'
+          })
+          expect(ctx.app.queueMiddlewares['queue-name'].jobOpts).equal(undefined)
+          done()
+        })
+
+        it('should if pass 2 object, it will accordingly to be consumeOpts and jobOpts', function(done) {
+          ctx.app.queue('queue-name', {test: 'test'}, {test2: 'test2'}, function * () {})
+          expect(ctx.app.queueMiddlewares['queue-name'].consumeOpts).equal({
+            test: 'test'
+          })
+          expect(ctx.app.queueMiddlewares['queue-name'].jobOpts).equal({
+            test2: 'test2'
           })
           done()
         })

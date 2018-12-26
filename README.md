@@ -127,8 +127,12 @@ app.on('error', function (err) {
 // setup a queue
 const queueOpts = {/* queue options */}
 const consumeOpts = {/* consume options */}
+const jobOpts = {/* jobOpts: numberInstances */
+    numberInstances: 1
+  }
 // correct usage: (note that consumeOpts becomes the second arg)
 app.queue('queue0', consumeOpts, function * () {})
+app.queue('queue0', consumeOpts, jobOpts, function * () {})
 // errors
 app.queue('queue0', queueOpts, consumeOpts, function * () {})
 // Error: 'app.queue() cannot use "queueOpts" when using a schema'
