@@ -258,6 +258,17 @@ describe('Application', function () {
           }).to.throw(/middlewares.*generator/)
           done()
         })
+
+        it('should not error if pass generator middleware 2 times', function (done) {
+          ctx.app.queue('queue', {}, function * () {}, function * () {})
+          done()
+        })
+
+        it('should not error if pass array of generator middlewares', function (done) {
+          ctx.app.queue('queue', {}, [function * () {}, function * () {}])
+          done()
+        })
+
         it('should error if called w/ same queue more than once', function (done) {
           expect(function () {
             ctx.app.queue('queue', function * () {})
